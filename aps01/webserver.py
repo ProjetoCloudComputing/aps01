@@ -16,9 +16,10 @@ def tarefa():
 
     else:
         body = json.loads(request.data)
+        print("body ",body)
         Tarefas.countTarefas += 1
         newId = Tarefas.countTarefas
-        tarefa = Tarefas.Tarefas(newId ,body["titulo"], body["content"])
+        tarefa = Tarefas.Tarefas(newId , body["titulo"], body["content"])
         Tarefas.dicTarefas[newId] = tarefa
         print(Tarefas.dicTarefas)
         return "200"
