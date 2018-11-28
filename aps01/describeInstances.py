@@ -2,18 +2,19 @@ import boto3
 from pprint import pprint
 
 ec2 = boto3.client('ec2')
-response = ec2.describe_instances()
 # instancesToTerminate = []
+test = "i-044f245c38471907f"
+print("Finding Load balancer, instance id: ", instance)
+publicIp = None
+response = ec2.describe_instances()
+# pprint(response)
 for group in response["Reservations"]:
     for instance in group["Instances"]:
-        try:
-            key = instance["Tags"][0]["Key"]
-            value = instance["Tags"][0]["Value"]
-            state = instance["State"]["Name"] 
-            instanceId = instance["InstanceId"]
-            if(key == "Owner" and value == "Raphael"):
-                if (state == "running"):
-        except:
-            print("instances has no tag, pass")
+        instanceId = instance["InstanceId"]
+        print("Instance id: ", instanceId)
+        print(instanceId == instance)
+        if(instanceId == test):
+            publicIp = instance["NetworkInterfaces"][0]["Association"]["PublicIp"]
+            print("Found load balander in aws: ", publicIp, instanceId)
 
 # pprint(response)

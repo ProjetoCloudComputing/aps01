@@ -33,14 +33,16 @@ ec2_resource = boto3.resource(
                 aws_secret_access_key=SECRET_KEY,
                 region_name = regionName)
 
+#Image ID
+ubuntu18 = "ami-0ac019f4fcb7cb7e6"
 
 #Creating Keypair and .pem file
-keyName = createKeyPair.createKeyPair(ec2_client, keyPairName)
+keyName = createKeyPair.createKeyPair(ec2, keyPairName)
 
 #Creating security group
-security_group_id = createSecurityGroup.create(ec2_client, securityGroupName)
+security_group_id = createSecurityGroup.create(ec2, securityGroupName)
 
-instance = ec2_resource.create_instances(
+instance_res = ec2_resource.create_instances(
     ImageId=ubuntu18,
     InstanceType='t2.micro',
     KeyName=keyName,
@@ -50,7 +52,7 @@ instance = ec2_resource.create_instances(
         security_group_id,
     ],
     SecurityGroups=[
-        GroupName,
+        securityGroupName,
     ],
     TagSpecifications=[
         {
@@ -73,9 +75,9 @@ instance = ec2_resource.create_instances(
             python3 webaps4.py {ACCESS_KEY} {SECRET_KEY} {keyPairName} {securityGroupName} {regionName}"""
 )
 print("Load Balancer created, waiting for request being ready")
-waiter = ec2_client.get_waiter('instance_exists')
+waiter = ec2.get_waiter('instance_exists')
 waiter.wait(
-    InstanceIds=[instance[0].id],
+    InstanceIds=[instance_res[0].id],
     WaiterConfig={
         'Delay': 15,
         'MaxAttempts': 40
@@ -83,9 +85,9 @@ waiter.wait(
 )
 
 print("Request ready, waiting for instance being ready")
-waiter = ec2_client.get_waiter('instance_running')
+waiter = ec2.get_waiter('instance_running')
 waiter.wait(
-    InstanceIds=[instance[0].id],
+    InstanceIds=[instance_res[0].id],
     WaiterConfig={
         'Delay': 15,
         'MaxAttempts': 40
@@ -93,26 +95,30 @@ waiter.wait(
 )
 
 #finding Load Balancer
+print("Finding Load balancer, instance id: ", instance_res[0].id)
+publicIp = None
 response = ec2.describe_instances()
 for group in response["Reservations"]:
     for instance in group["Instances"]:
+        instanceId = instance["InstanceId"]
+        print("Instance id: ", instanceId)
+        if(instanceId == instance_res[0].id):
+            publicIp = instance["NetworkInterfaces"][0]["Association"]["PublicIp"]
+            print("Found load balander in aws: ", publicIp, instanceId)
+            break
+            
+if(publicIp):
+    #Waiting for load balancer is ready
+    print("Waiting for load balancer is ready")
+    while True:
         try:
-            instanceId = instance["InstanceId"]
-            if(instanceId == instance[0].id):
-                publicIp = instance["NetworkInterfaces"][0]["Association"]["PublicIp"]
-                print("Found load balander in aws: ", publicIp, instanceId)
+            req = requests.get(url=f"http://{publicIp}:5000/loadbalancer", timeout=5)               
+            if(req.text == "200"):
+                print(f"Load Balancer is ready")
+                break
         except:
-            print("Instance has no id (?)")
+            print("Load Balancer is not ready yet")
 
-#Waiting for load balancer is ready
-print("Waiting for load balancer is ready")
-while True:
-    req = requests.get(url=f"http://{publicIp}:5000/loadbalancer", timeout=5)               
-    if(req.text == "200"):
-        print(f"Load Balancer is ready")
-        break
-    else:
-        print("Load Balancer is not ready yet")
-
-print(f"Load Balancer Running on IP: {publicIp}, ready for use")
-
+    print(f"Load Balancer Running on IP: {publicIp}, ready for use")
+else:
+    print("Couldn't find lb")

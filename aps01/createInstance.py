@@ -10,7 +10,7 @@ import time
 #Image ID
 ubuntu18 = "ami-0ac019f4fcb7cb7e6"
 
-def createNewInstances(ec2_client, numOfInstances, keyPairName, sg_name):
+def createNewInstances(ec2_client, ec2_resource, numOfInstances, keyPairName, sg_name):
     #Creating Keypair and .pem file
     keyName = createKeyPair.createKeyPair(ec2_client, keyPairName)
 

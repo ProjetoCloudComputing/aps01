@@ -77,7 +77,7 @@ def checkInstancesRunning(currentInstances, numOfActives=3):
         if(len(currentInstances.keys()) != numOfActives):
             numToUpdate = numOfActives - len(currentInstances.keys()) #Number of instances that are missing
             print(f"Creating {numToUpdate} instance(s), just {len(currentInstances.keys())} are running, we need {numOfActives}")
-            newInstances = createInstance.createNewInstances(ec2, numToUpdate, KEY_PAIR_NAME, SECURITY_GROUP_NAME)
+            newInstances = createInstance.createNewInstances(ec2, ec2_resource, numToUpdate, KEY_PAIR_NAME, SECURITY_GROUP_NAME)
             testing = getIntancesRunning()
             testing_instances = newInstances
             #wait for instances servers to be ready
@@ -132,9 +132,12 @@ def catch_all(path):
     print(path)
     if(path == "loadbalancer"):
         return "200"
-    _, randomIp = random.choice(list(instancesRunning.items()))
-    print(randomIp)
-    return redirect(f"http://{randomIp}:5000/{path}")
+    if(len(list(currentInstances.items())) > 0):
+        _, randomIp = random.choice(list(instancesRunning.items()))
+        print(randomIp)
+        return redirect(f"http://{randomIp}:5000/{path}")
+    else:
+        return "Creating instances, there's no instances running yet"
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=False)

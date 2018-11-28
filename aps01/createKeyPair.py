@@ -36,8 +36,8 @@ def createKeyPair(ec2, keyPairName):
         print("Key Pair already exists, won't delete")
     else:
         print("Creating KeyPair...")
-        ec2.create_key_pair(KeyName=keyPairName)
-        createPemFile(keyPairName, keyPairName)
+        created = ec2.create_key_pair(KeyName=keyPairName)
+        createPemFile(created, keyPairName)
 
     return keyPairName
 
