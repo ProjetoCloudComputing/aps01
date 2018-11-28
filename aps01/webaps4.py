@@ -12,7 +12,9 @@ args = sys.argv
 try:
     ACCESS_KEY = args[1]
     SECRET_KEY = args[2]
-    REGION_NAME = args[3]
+    KEY_PAIR_NAME = args[3]
+    SECURITY_GROUP_NAME = args[4]
+    REGION_NAME = args[5]
 except:
     print("Wrong args")
 
@@ -75,7 +77,7 @@ def checkInstancesRunning(currentInstances, numOfActives=3):
         if(len(currentInstances.keys()) != numOfActives):
             numToUpdate = numOfActives - len(currentInstances.keys()) #Number of instances that are missing
             print(f"Creating {numToUpdate} instance(s), just {len(currentInstances.keys())} are running, we need {numOfActives}")
-            newInstances = createInstance.createNewInstances(ec2, numToUpdate)
+            newInstances = createInstance.createNewInstances(ec2, numToUpdate, KEY_PAIR_NAME, SECURITY_GROUP_NAME)
             testing = getIntancesRunning()
             testing_instances = newInstances
             #wait for instances servers to be ready
