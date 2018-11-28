@@ -14,7 +14,7 @@ if server:
         if args[1] == "adicionar":
             if len(args) > 3:
                 req = requests.post(url=server+"/Tarefa", data=json.dumps({"titulo": args[2], "content": args[3]}))
-                print(req.json())
+                print(req)
             else:
                 print("Formato adicionar: adicionar titulo content")
 
@@ -38,7 +38,8 @@ if server:
 
         elif args[1] == "atualizar":
             if len(args) > 3:
-                req = requests.put(url=server+"/Tarefa/"+args[2], data=json.dumps({"content": args[3]}))
+                new_content = ' '.join(args[3:])
+                req = requests.put(url=server+"/Tarefa/"+args[2], data=json.dumps({"content": new_content}))
                 pprint(req.json())
             else:
                 print("Formato atualizar: atualizar id new_content")

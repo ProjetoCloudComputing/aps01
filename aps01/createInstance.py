@@ -47,7 +47,7 @@ def createNewInstances(ec2_client, ec2_resource, numOfInstances, keyPairName, sg
                 cd aps01
                 chmod +x install.sh
                 ./install.sh
-                python3 webserver.py"""
+                python3 firebaseWebServer.py"""
 
     )
     newInstancesIds = []
