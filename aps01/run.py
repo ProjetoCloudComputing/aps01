@@ -9,6 +9,7 @@ import requests
 import sys
 import json
 import createKeyPair, createSecurityGroup
+import os
 
 try:
     with open('credentials.json') as f:
@@ -122,3 +123,5 @@ if(publicIp):
     print(f"Load Balancer Running on IP: {publicIp}, ready for use")
 else:
     print("Couldn't find lb")
+
+

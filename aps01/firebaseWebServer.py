@@ -1,7 +1,6 @@
 from flask import Flask, redirect, url_for, request
 import json
-import pyrebase
-import Tarefas
+import pyrebase 
 
 with open('credentials.json') as f:
         data = json.load(f)

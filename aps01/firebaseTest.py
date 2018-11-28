@@ -1,5 +1,6 @@
 import pyrebase
 import Tarefas
+import os
 config = {
     "apiKey": "AIzaSyDeOtxp4HzORcB9GTZZSiWRyyHKu7CEg78",
     "authDomain": "cloudcomputing-41896.firebaseapp.com",
@@ -59,7 +60,5 @@ def deleteUnique(id):
         print("Cant delete a Tarefa that doesnt exists")
     
 
-
-# init()
-# post("abcd", "abcde")
-post("alo", "alo")
+os.system(f"export ALO='{os.getcwd()}'")
+os.system("source ~/.zshrc")
