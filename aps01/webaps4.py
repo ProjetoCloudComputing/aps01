@@ -138,7 +138,8 @@ def catch_all(path):
         pprint(instancesRunning)
         _, randomIp = random.choice(list(instancesRunning.items()))
         return redirect(f"http://{randomIp}:5000/{path}")
-        return f"Running Instances, there's no instances running yet"
+    else:
+        return f"Wait creating instances, there's no instances running yet"
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=False)
