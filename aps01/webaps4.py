@@ -132,7 +132,7 @@ def catch_all(path):
     print(path)
     if(path == "loadbalancer"):
         return "200"
-    if(len(list(currentInstances.items())) > 0):
+    if(len(list(instancesRunning.items())) > 0):
         _, randomIp = random.choice(list(instancesRunning.items()))
         print(randomIp)
         return redirect(f"http://{randomIp}:5000/{path}")
