@@ -27,7 +27,7 @@ def createNewInstances(ec2_client, ec2_resource, numOfInstances, keyPairName, sg
             security_group_id,
         ],
         SecurityGroups=[
-            GroupName,
+            sg_name,
         ],
         TagSpecifications=[
             {
