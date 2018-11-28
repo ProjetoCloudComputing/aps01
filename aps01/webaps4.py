@@ -13,21 +13,29 @@ ec2_resource = boto3.resource('ec2')
 def checkInstancesRunning(currentInstances, numOfActives=3):
     while True:
         print("-------------")
+
         #Healthcheck for each instance
         instancesToTerminate = []
-        for instance_id, ip in list(currentInstances.items()):
-            try:
-                req = requests.get(url=f"http://{ip}:5000/healthcheck")               
-                if(req.text == "200"):
-                    print(f"Instance {instance_id} is ok")
-                else:
+        if (len(list(currentInstances.items())) > 0):
+            instancesToTerminate = []
+            for instance_id, ip in list(currentInstances.items()):
+                try:
+                    req = requests.get(url=f"http://{ip}:5000/healthcheck", timeout=5)               
+                    if(req.text == "200"):
+                        print(f"Instance {instance_id} is ok")
+                    else:
+                        instancesToTerminate.append(instance_id)
+                except:
+                    print("Timeout")
                     instancesToTerminate.append(instance_id)
-            except:
-                print("Timeout")
-                instancesToTerminate.append(instance_id)
         
         #Terminate all instances that doesnt respond to healthcheck
         if (len(instancesToTerminate) > 0):
+
+            #deleting from current dictionary
+            for inst in instancesToTerminate:
+                del currentInstances[inst]
+                
             print("Terminating instances")
             print(f"deleting {len(instancesToTerminate)} instance(s)")
             ec2_resource.instances.filter(InstanceIds=instancesToTerminate).terminate()
@@ -41,25 +49,21 @@ def checkInstancesRunning(currentInstances, numOfActives=3):
                     'MaxAttempts': 40
                 }
             )
-        
-        #deleting from current dictionary
-        for inst in instancesToTerminate:
-            del currentInstances[inst]
+            
 
         #Checking if we need to create more instances
         if(len(currentInstances.keys()) != numOfActives):
             numToUpdate = numOfActives - len(currentInstances.keys()) #Number of instances that are missing
             print(f"Creating {numToUpdate} instance(s), just {len(currentInstances.keys())} are running, we need {numOfActives}")
             newInstances = createInstance.createNewInstances(numToUpdate)
-
-            currentInstances = getIntancesRunning()
-
+            testing = getIntancesRunning()
             testing_instances = newInstances
-            #wait for instances serves to be ready
+            #wait for instances servers to be ready
             while (len(testing_instances) > 0):
                 for instance in testing_instances:
                     try:
-                        req = requests.get(url=f"http://{currentInstances[instance]}:5000/healthcheck")
+                        print("Link: ", currentInstances[instance])
+                        req = requests.get(url=f"http://{testing[instance]}:5000/healthcheck", timeout=5)
                         print(req)               
                         if(req.text == "200"):
                             print(f"Instance {instance} is ready")
@@ -67,9 +71,7 @@ def checkInstancesRunning(currentInstances, numOfActives=3):
                     except:
                         print(f"{instance} is not ready yet")
 
-                time.sleep(5)
-
-            currentInstances = getIntancesRunning()
+            # currentInstances = getIntancesRunning()
         print("-------------")
         time.sleep(2)
 
@@ -108,4 +110,4 @@ def catch_all(path):
         
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host='0.0.0.0', debug=False)
