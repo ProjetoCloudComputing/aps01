@@ -100,14 +100,18 @@ def getIntancesRunning():
     response = ec2.describe_instances()
     for group in response["Reservations"]:
         for instance in group["Instances"]:
-            key = instance["Tags"][0]["Key"]
-            value = instance["Tags"][0]["Value"]
-            state = instance["State"]["Name"] 
-            instanceId = instance["InstanceId"]
-            if(key == "Owner" and value == "Raphael"):
-                if (state == "running"):
-                    publicIp = instance["NetworkInterfaces"][0]["Association"]["PublicIp"]
-                    instancesRunning[instanceId] = publicIp
+            try:
+                key = instance["Tags"][0]["Key"]
+                value = instance["Tags"][0]["Value"]
+                state = instance["State"]["Name"] 
+                instanceId = instance["InstanceId"]
+                if(key == "Owner" and value == "Raphael"):
+                    if (state == "running"):
+                        publicIp = instance["NetworkInterfaces"][0]["Association"]["PublicIp"]
+                        instancesRunning[instanceId] = publicIp
+            except:
+                print("Not my instances, pass")
+
     print("Instances Running: ")                
     pprint(instancesRunning)
     return instancesRunning
@@ -124,10 +128,11 @@ checkInstancesStatus.start()
 @app.route('/<path:path>', methods=['GET', 'PUT', 'DELETE', 'POST'])
 def catch_all(path):
     print(path)
+    if(path == "loadbalancer"):
+        return "200"
     _, randomIp = random.choice(list(instancesRunning.items()))
     print(randomIp)
     return redirect(f"http://{randomIp}:5000/{path}")
-        
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=False)

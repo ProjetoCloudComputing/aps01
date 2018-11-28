@@ -2,8 +2,6 @@ import boto3
 from botocore.exceptions import ClientError
 from pprint import pprint
 
-ec2 = boto3.client('ec2')
-
 def deleteSecurityGroup(ec2, name):
     try:
         response = ec2.delete_security_group(GroupName=name)
