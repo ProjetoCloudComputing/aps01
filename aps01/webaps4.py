@@ -1,8 +1,10 @@
 from flask import Flask, redirect, url_for, request
 from pprint import pprint
+import queue
 import boto3
 import random
 from threading import Thread
+from queue import Queue
 import time
 import createInstance
 import requests
@@ -32,7 +34,8 @@ ec2_resource = boto3.resource(
                 region_name=REGION_NAME)
 
 
-def checkInstancesRunning(instancesRunning, numOfActives=3):
+def checkInstancesRunning(numOfActives=3):
+    global instancesRunning
     while True:
         print("-------------")
 
@@ -92,9 +95,8 @@ def checkInstancesRunning(instancesRunning, numOfActives=3):
                             testing_instances.remove(instance)
                     except:
                         print(f"{instance} is not ready yet")
-
-            instancesRunning = getInstancesRunning()
         print("-------------")
+        instancesRunning = getInstancesRunning()
         time.sleep(2)
 
 def getInstancesRunning():
@@ -114,14 +116,16 @@ def getInstancesRunning():
             except:
                 print("Not my instances, pass")
 
-    print("Instances Running: ")                
-    pprint(get_instances)
+    # print("Instances Running: ")                
+    # pprint(get_instances)
     return get_instances
 
 app = Flask(__name__)
 instancesRunning = getInstancesRunning() #Instances dictionary, key: instanceId, value: public ipv4
-checkInstancesStatus = Thread(target=checkInstancesRunning,args=[instancesRunning, 3])
+
+checkInstancesStatus = Thread(target=checkInstancesRunning,args=[3])
 checkInstancesStatus.start()
+
 
 
 @app.route('/', defaults={'path': ''})
@@ -130,12 +134,10 @@ def catch_all(path):
     print(path)
     if(path == "loadbalancer"):
         return "200"
-    instancesRunning = getInstancesRunning()
     if(len(list(instancesRunning.items())) > 0):
-        print("alooooo: ", len(list(instancesRunning.items())))
+        pprint(instancesRunning)
         _, randomIp = random.choice(list(instancesRunning.items()))
         return redirect(f"http://{randomIp}:5000/{path}")
-    else:
         return f"Running Instances, there's no instances running yet"
 
 if __name__ == '__main__':
