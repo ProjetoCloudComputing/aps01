@@ -32,15 +32,15 @@ ec2_resource = boto3.resource(
                 region_name=REGION_NAME)
 
 
-def checkInstancesRunning(currentInstances, numOfActives=3):
+def checkInstancesRunning(instancesRunning, numOfActives=3):
     while True:
         print("-------------")
 
         #Healthcheck for each instance
         instancesToTerminate = []
-        if (len(list(currentInstances.items())) > 0):
+        if (len(list(instancesRunning.items())) > 0):
             instancesToTerminate = []
-            for instance_id, ip in list(currentInstances.items()):
+            for instance_id, ip in list(instancesRunning.items()):
                 try:
                     req = requests.get(url=f"http://{ip}:5000/healthcheck", timeout=5)               
                     if(req.text == "200"):
@@ -56,7 +56,7 @@ def checkInstancesRunning(currentInstances, numOfActives=3):
 
             #deleting from current dictionary
             for inst in instancesToTerminate:
-                del currentInstances[inst]
+                del instancesRunning[inst]
                 
             print("Terminating instances")
             print(f"deleting {len(instancesToTerminate)} instance(s)")
@@ -74,11 +74,11 @@ def checkInstancesRunning(currentInstances, numOfActives=3):
             
 
         #Checking if we need to create more instances
-        if(len(currentInstances.keys()) != numOfActives):
-            numToUpdate = numOfActives - len(currentInstances.keys()) #Number of instances that are missing
-            print(f"Creating {numToUpdate} instance(s), just {len(currentInstances.keys())} are running, we need {numOfActives}")
+        if(len(instancesRunning.keys()) != numOfActives):
+            numToUpdate = numOfActives - len(instancesRunning.keys()) #Number of instances that are missing
+            print(f"Creating {numToUpdate} instance(s), just {len(instancesRunning.keys())} are running, we need {numOfActives}")
             newInstances = createInstance.createNewInstances(ec2, ec2_resource, numToUpdate, KEY_PAIR_NAME, SECURITY_GROUP_NAME)
-            testing = getIntancesRunning()
+            testing = getInstancesRunning()
             testing_instances = newInstances
             #wait for instances servers to be ready
             while (len(testing_instances) > 0):
@@ -93,12 +93,12 @@ def checkInstancesRunning(currentInstances, numOfActives=3):
                     except:
                         print(f"{instance} is not ready yet")
 
-            currentInstances = getIntancesRunning()
+            instancesRunning = getInstancesRunning()
         print("-------------")
         time.sleep(2)
 
-def getIntancesRunning():
-    instancesRunning = {}
+def getInstancesRunning():
+    get_instances = {}
     response = ec2.describe_instances()
     for group in response["Reservations"]:
         for instance in group["Instances"]:
@@ -110,18 +110,16 @@ def getIntancesRunning():
                 if(key == "Owner" and value == "Raphael"):
                     if (state == "running"):
                         publicIp = instance["NetworkInterfaces"][0]["Association"]["PublicIp"]
-                        instancesRunning[instanceId] = publicIp
+                        get_instances[instanceId] = publicIp
             except:
                 print("Not my instances, pass")
 
     print("Instances Running: ")                
-    pprint(instancesRunning)
-    return instancesRunning
+    pprint(get_instances)
+    return get_instances
 
 app = Flask(__name__)
-
-instancesRunning = getIntancesRunning() #Instances dictionary, key: instanceId, value: public ipv4
-
+instancesRunning = getInstancesRunning() #Instances dictionary, key: instanceId, value: public ipv4
 checkInstancesStatus = Thread(target=checkInstancesRunning,args=[instancesRunning, 3])
 checkInstancesStatus.start()
 
@@ -132,12 +130,13 @@ def catch_all(path):
     print(path)
     if(path == "loadbalancer"):
         return "200"
+    instancesRunning = getInstancesRunning()
     if(len(list(instancesRunning.items())) > 0):
+        print("alooooo: ", len(list(instancesRunning.items())))
         _, randomIp = random.choice(list(instancesRunning.items()))
-        print(randomIp)
         return redirect(f"http://{randomIp}:5000/{path}")
     else:
-        return "Creating instances, there's no instances running yet"
+        return f"Running Instances, there's no instances running yet"
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=False)
