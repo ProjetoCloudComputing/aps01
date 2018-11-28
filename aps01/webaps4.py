@@ -6,9 +6,29 @@ from threading import Thread
 import time
 import createInstance
 import requests
+import sys
 
-ec2 = boto3.client('ec2')
-ec2_resource = boto3.resource('ec2')
+args = sys.argv
+try:
+    ACCESS_KEY = args[1]
+    SECRET_KEY = args[2]
+    REGION_NAME = args[3]
+except:
+    print("Wrong args")
+
+ec2 = boto3.client(
+                'ec2', 
+                aws_access_key_id=ACCESS_KEY,
+                aws_secret_access_key=SECRET_KEY,
+                region_name=REGION_NAME)
+
+
+ec2_resource = boto3.resource(
+                'ec2', 
+                aws_access_key_id=ACCESS_KEY,
+                aws_secret_access_key=SECRET_KEY,
+                region_name=REGION_NAME)
+
 
 def checkInstancesRunning(currentInstances, numOfActives=3):
     while True:
@@ -55,14 +75,14 @@ def checkInstancesRunning(currentInstances, numOfActives=3):
         if(len(currentInstances.keys()) != numOfActives):
             numToUpdate = numOfActives - len(currentInstances.keys()) #Number of instances that are missing
             print(f"Creating {numToUpdate} instance(s), just {len(currentInstances.keys())} are running, we need {numOfActives}")
-            newInstances = createInstance.createNewInstances(numToUpdate)
+            newInstances = createInstance.createNewInstances(ec2, numToUpdate)
             testing = getIntancesRunning()
             testing_instances = newInstances
             #wait for instances servers to be ready
             while (len(testing_instances) > 0):
                 for instance in testing_instances:
                     try:
-                        print("Link: ", currentInstances[instance])
+                        print("Link: ", testing[instance])
                         req = requests.get(url=f"http://{testing[instance]}:5000/healthcheck", timeout=5)
                         print(req)               
                         if(req.text == "200"):
@@ -71,7 +91,7 @@ def checkInstancesRunning(currentInstances, numOfActives=3):
                     except:
                         print(f"{instance} is not ready yet")
 
-            # currentInstances = getIntancesRunning()
+            currentInstances = getIntancesRunning()
         print("-------------")
         time.sleep(2)
 

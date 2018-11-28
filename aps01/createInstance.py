@@ -7,14 +7,13 @@ import boto3
 from pprint import pprint
 import time
 
-ec2_resource = boto3.resource('ec2')
-ec2_client = boto3.client('ec2')
-ssm_client = boto3.client('ssm')
+# ec2_resource = boto3.resource('ec2')
+# ec2_client = boto3.client('ec2')
 
 #Image ID
 ubuntu18 = "ami-0ac019f4fcb7cb7e6"
 
-def createNewInstances(numOfInstances):
+def createNewInstances(ec2_client, numOfInstances):
     #Creating Keypair and .pem file
     keyName = createKeyPair.createKeyPair(ec2_client, 'rapha_boto_3')
 
